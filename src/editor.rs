@@ -1,6 +1,15 @@
 use std::io::{self, Read};
 
+use crossterm::event::{read, Event::Key, KeyCode::Char};
+use crossterm::event::{KeyCode, KeyEventKind, KeyEventState, KeyModifiers};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+
+pub struct KeyEvent {
+    pub code: KeyCode,
+    pub modifiers: KeyModifiers,
+    pub kind: KeyEventKind,
+    pub state: KeyEventState,
+}
 
 pub struct Editor {}
 
@@ -10,6 +19,20 @@ impl Editor {
     }
     pub fn run(&self) {
         enable_raw_mode().unwrap();
+        loop {
+            match read() {
+                Ok(Key(event)) => {
+                    println!("{:?} \r", event);
+                    if let Char(c) = event.code {
+                        if c == 'q' {
+                            break;
+                        }
+                    }
+                }
+                Err(err) => print!("Error: {}", err),
+                _ => (),
+            }
+        }
         for b in io::stdin().bytes() {
             match b {
                 Ok(b) => {
@@ -23,7 +46,7 @@ impl Editor {
                         break;
                     }
                 }
-                Err(err) => println!("Error: {}", err),
+                Err(err) => println!("Error: {err}"),
             }
         }
         disable_raw_mode().unwrap();
